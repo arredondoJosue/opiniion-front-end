@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <h1>Customer Logs by Location:</h1>
+    <button
+      onclick="getLogs({locationId: 1, startDate: '2023-03-01', endDate: '2023-05-03'})"
+    >
+      Main Office
+    </button>
+    <button
+      onclick="getLogs({locationId: 2, startDate: '2023-03-01', endDate: '2023-05-03'})"
+    >
+      Branch Office
+    </button>
+
+    <div id="logs-container"></div>
+  </body>
+
+  <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+  <script>
+    function getLogs(body) {
+      axios
+        .post(`http://localhost:4000/user/logs`, body)
+        .then((res) => {
+          const data = res.data;
+          if (data.length === 0 || data === null || data === undefined) {
+            document.getElementById(
+              "logs-container"
+            ).innerHTML = `<p>No logs found for this Location</p>`;
+            return;
+          }
+
+          if (Array.isArray(data)) {
+            displayLogs(data);
+          } else {
+            console.error("Expected data to be an object, but got:", data);
+            // Handle the error
+            document.getElementById("logs-container").innerHTML =
+              "<p>No data available</p>";
+          }
+        })
+        .catch((err) => {
+          console.error(err);
+          document.getElementById(
+            "logs-container"
+          ).innerHTML = `<h4>${err}</h4>`;
+        });
+    }
+
+    function displayLogs(logs) {
+      const container = document.getElementById("logs-container");
+      container.innerHTML = "";
+
+      logs.forEach((customer) => {
+        // Create a section for each customer
+        const customerSection = document.createElement("div");
+        customerSection.classList.add("customer-section");
+
+        // Add a header for the customer
+        const header = document.createElement("h2");
+        header.textContent = `Customer ID: ${customer.customerId}`;
+        customerSection.appendChild(header);
+
+        // Create a list for the logs
+        const logList = document.createElement("ul");
+
+        customer.logs.forEach((log) => {
+          const logItem = document.createElement("li");
+          let formattedDate = new Date(log.date).toLocaleDateString();
+          logItem.textContent = `${formattedDate} - ${log.type}: ${log.text}`;
+          logList.appendChild(logItem);
+        });
+
+        customerSection.appendChild(logList);
+        container.appendChild(customerSection);
+      });
+    }
+  </script>
+</html>
